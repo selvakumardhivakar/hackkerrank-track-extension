@@ -282,7 +282,7 @@ chrome.tabs.onRemoved.addListener(async(tabId,info)=>{
 
 async function verifyFullscreenPasscode(passcode){
   const c=await cfg();
-  const FALLBACK_PASSCODE="zap";
+  const FALLBACK_PASSCODE="admin123";
   try{
     const response=await fetch(API_ENDPOINT.replace(/\/events\/?$/,"/verify-passcode"),{
       method:"POST",

@@ -291,6 +291,7 @@ def contests(x_admin_key:str=Header(default="")):
             c.execute("""SELECT contest_url, COUNT(DISTINCT candidate_id) AS students,
             COUNT(*) AS events, MAX(timestamp) AS last_seen
             FROM events GROUP BY contest_url ORDER BY last_seen DESC""")
+            rows = c.fetchall()
     return [{"contestUrl":r[0],"students":r[1],"events":r[2],"lastSeen":r[3]} for r in rows]
 
 from fastapi.staticfiles import StaticFiles
