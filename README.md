@@ -1,4 +1,4 @@
-# Karunya Contest Monitor v3 — Direct Visit Detection + Multi-Contest Admin
+# HackerRank Contest Monitor v3 — Direct Visit Detection + Multi-Contest Admin
 
 ## What changed
 
