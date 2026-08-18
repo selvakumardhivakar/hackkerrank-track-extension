@@ -37,7 +37,7 @@ function validateInputs() {
         studentName: "",
         studentRegId: "",
         hackerRankId: "",
-        apiEndpoint: "http://localhost:8000/api/events"
+        apiEndpoint: ""
     });
 
     $("contestUrl").value = c.contestUrl;

@@ -5,7 +5,7 @@ const DEFAULTS={
   studentName:"",
   studentRegId:"",
   hackerRankId:"",
-  apiEndpoint:"http://localhost:8000/api/events",
+  apiEndpoint:"",
   enabled:true
 };
 
