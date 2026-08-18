@@ -1,0 +1,42 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>HackerRank Contest Tracking</title>
+<style>
+body{width:360px;padding:16px;font:14px Arial;margin:0}
+h2{margin:0 0 12px}
+label{display:block;font-weight:600;margin-top:10px}
+input{width:100%;box-sizing:border-box;padding:9px;margin-top:5px}
+button{width:100%;padding:10px;margin-top:9px;border:0;border-radius:6px;cursor:pointer}
+.primary{background:#111827;color:#fff}.secondary{background:#e5e7eb}
+button:disabled{opacity:0.5;cursor:not-allowed}
+.small{font-size:11px;color:#667085;line-height:1.45;margin-top:12px}
+#status{margin-top:10px;font-weight:600}
+</style>
+</head>
+<body>
+<h2>HackerRank Contest Tracking</h2>
+<label>Contest URL</label>
+<input id="contestUrl" placeholder="https://www.hackerrank.com/test-1787062056">
+<label>Student Name</label>
+<input id="studentName" placeholder="John Doe">
+<label>Student Reg ID</label>
+<input id="studentRegId" placeholder="UR123456">
+<label>HackerRank ID</label>
+<input id="hackerRankId" placeholder="johndoe_hr">
+
+<label>Backend Endpoint</label>
+<input id="apiEndpoint" placeholder="http://localhost:8000/api/events">
+<button class="secondary" id="save">Save Configuration</button>
+<button class="primary" id="start">Start / Login to Contest</button>
+<button class="primary" id="reenter">Re-enter / Resume Contest</button>
+<button class="secondary" id="clear">Clear Local Events</button>
+<div id="status"></div>
+<div class="small">
+You may enter either a full https:// HackerRank URL or www.hackerrank.com/....
+The extension automatically adds https:// when needed.
+</div>
+<script src="popup.js"></script>
+</body>
+</html>
