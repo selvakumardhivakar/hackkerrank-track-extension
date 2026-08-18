@@ -6,7 +6,7 @@ try:
     load_dotenv(dotenv_path=env_path)
 except ImportError:
     pass
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union, List
 from fastapi import FastAPI, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -113,17 +113,20 @@ def get_tracking(x_admin_key:str=Header(default="")):
     return {"ok": True, "tracking_enabled": is_tracking_enabled()}
 
 @app.post("/api/events")
-def create_event(e:Event):
+def create_event(payload: Union[Event, List[Event]]):
     if not is_tracking_enabled():
         return {"ok":True,"ignored":True,"message":"Tracking is globally disabled."}
     
-    ts=e.timestamp or datetime.now(timezone.utc).isoformat()
+    events_list = payload if isinstance(payload, list) else [payload]
+    
     with get_db() as conn:
         with conn.cursor() as c:
-            c.execute("""INSERT INTO events
-            (candidate_id,contest_url,event_type,timestamp,details)
-            VALUES(%s,%s,%s,%s,%s)""",
-            (e.candidateId,e.contestUrl,e.eventType,ts,json.dumps(e.details)))
+            for e in events_list:
+                ts = e.timestamp or datetime.now(timezone.utc).isoformat()
+                c.execute("""INSERT INTO events
+                (candidate_id,contest_url,event_type,timestamp,details)
+                VALUES(%s,%s,%s,%s,%s)""",
+                (e.candidateId, e.contestUrl, e.eventType, ts, json.dumps(e.details)))
         conn.commit()
     return {"ok":True}
 
@@ -288,5 +291,7 @@ def contests(x_admin_key:str=Header(default="")):
             c.execute("""SELECT contest_url, COUNT(DISTINCT candidate_id) AS students,
             COUNT(*) AS events, MAX(timestamp) AS last_seen
             FROM events GROUP BY contest_url ORDER BY last_seen DESC""")
-            rows = c.fetchall()
     return [{"contestUrl":r[0],"students":r[1],"events":r[2],"lastSeen":r[3]} for r in rows]
+
+from fastapi.staticfiles import StaticFiles
+app.mount("/", StaticFiles(directory=os.path.join(os.path.dirname(__file__), "..", "public"), html=True), name="public")

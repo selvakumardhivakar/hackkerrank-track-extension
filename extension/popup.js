@@ -112,7 +112,3 @@ $("reenter").onclick = async () => {
     }
 };
 
-$("clear").onclick = async () => {
-    await chrome.storage.local.set({ events: [] });
-    $("status").textContent = "Local events cleared.";
-};

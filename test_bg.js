@@ -1,3 +1,4 @@
+function importScripts(){}
 importScripts('env.js');
 
 const DEFAULTS={
@@ -409,14 +410,6 @@ chrome.runtime.onMessage.addListener((m,s,r)=>{
         await record("FULLSCREEN_PASSCODE_ACCEPTED",{
           tabId:s.tab?.id||null
         });
-        
-        if (s.tab) {
-          try {
-            await chrome.windows.update(s.tab.windowId, {state: "fullscreen"});
-          } catch (e) {
-            await record("BROWSER_FULLSCREEN_FAILED", {error: String(e)});
-          }
-        }
       }else{
         await record("FULLSCREEN_PASSCODE_REJECTED",{
           tabId:s.tab?.id||null
