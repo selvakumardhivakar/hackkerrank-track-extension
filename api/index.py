@@ -294,5 +294,8 @@ def contests(x_admin_key:str=Header(default="")):
             rows = c.fetchall()
     return [{"contestUrl":r[0],"students":r[1],"events":r[2],"lastSeen":r[3]} for r in rows]
 
-from fastapi.staticfiles import StaticFiles
-app.mount("/", StaticFiles(directory=os.path.join(os.path.dirname(__file__), "..", "public"), html=True), name="public")
+import os
+public_dir = os.path.join(os.path.dirname(__file__), "..", "public")
+if os.path.exists(public_dir):
+    from fastapi.staticfiles import StaticFiles
+    app.mount("/", StaticFiles(directory=public_dir, html=True), name="public")
