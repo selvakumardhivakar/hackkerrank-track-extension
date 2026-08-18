@@ -24,8 +24,7 @@ function validateInputs() {
     const isValid = $("contestUrl").value.trim() !== "" &&
                     $("studentName").value.trim() !== "" &&
                     $("studentRegId").value.trim() !== "" &&
-                    $("hackerRankId").value.trim() !== "" &&
-                    $("apiEndpoint").value.trim() !== "";
+                    $("hackerRankId").value.trim() !== "";
                     
     $("start").disabled = !isValid;
     $("reenter").disabled = !isValid;
@@ -36,18 +35,16 @@ function validateInputs() {
         contestUrl: "https://www.hackerrank.com/Karunya_12",
         studentName: "",
         studentRegId: "",
-        hackerRankId: "",
-        apiEndpoint: ""
+        hackerRankId: ""
     });
 
     $("contestUrl").value = c.contestUrl;
     $("studentName").value = c.studentName;
     $("studentRegId").value = c.studentRegId;
     $("hackerRankId").value = c.hackerRankId;
-    $("apiEndpoint").value = c.apiEndpoint;
 
     validateInputs();
-    ["contestUrl", "studentName", "studentRegId", "hackerRankId", "apiEndpoint"].forEach(id => {
+    ["contestUrl", "studentName", "studentRegId", "hackerRankId"].forEach(id => {
         $(id).addEventListener("input", validateInputs);
     });
 })();
@@ -63,7 +60,6 @@ async function save() {
         studentName: $("studentName").value.trim(),
         studentRegId: regId,
         hackerRankId: $("hackerRankId").value.trim(),
-        apiEndpoint: $("apiEndpoint").value.trim(),
         enabled: true
     });
 

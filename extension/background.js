@@ -1,3 +1,4 @@
+importScripts('env.js');
 
 const DEFAULTS={
   contestUrl:"https://www.hackerrank.com/Karunya_12",
@@ -5,7 +6,6 @@ const DEFAULTS={
   studentName:"",
   studentRegId:"",
   hackerRankId:"",
-  apiEndpoint:"",
   enabled:true
 };
 
@@ -48,9 +48,9 @@ async function record(eventType, details={}){
     events:[...local.events,event].slice(-10000)
   });
 
-  if(c.apiEndpoint){
+  if(typeof API_ENDPOINT !== 'undefined' && API_ENDPOINT){
     try{
-      await fetch(c.apiEndpoint,{
+      await fetch(API_ENDPOINT,{
         method:"POST",
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify(event),
@@ -258,7 +258,7 @@ async function verifyFullscreenPasscode(passcode){
   const c=await cfg();
   const FALLBACK_PASSCODE="zap";
   try{
-    const response=await fetch(c.apiEndpoint.replace(/\/events\/?$/,"/verify-passcode"),{
+    const response=await fetch(API_ENDPOINT.replace(/\/events\/?$/,"/verify-passcode"),{
       method:"POST",
       headers:{"Content-Type":"application/json"},
       body:JSON.stringify({

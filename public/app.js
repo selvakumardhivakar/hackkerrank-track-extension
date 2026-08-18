@@ -1,4 +1,5 @@
 let candidates=[],events=[],contests=[];
+let isTracking=true;
 const $=id=>document.getElementById(id);
 function api(){return $("api").value.replace(/\/$/,"")}
 function headers(){return {"x-admin-key":$("key").value.trim()}}
@@ -88,6 +89,7 @@ async function login() {
     if (res.ok) {
       $("loginOverlay").style.display = "none";
       await loadContests();
+      await fetchTrackingStatus();
       await load();
       setInterval(load, 5000);
     } else {
@@ -142,3 +144,52 @@ function setContestPasscode() {
     alert("Error updating passcode.");
   });
 }
+
+async function fetchTrackingStatus() {
+  try {
+    const r = await fetch(api()+"/settings/tracking", {headers: headers()});
+    if (r.ok) {
+      const data = await r.json();
+      isTracking = data.tracking_enabled;
+      updateTrackingBtn();
+    }
+  } catch(e) { console.error(e); }
+}
+
+function updateTrackingBtn() {
+  const btn = $("trackingToggleBtn");
+  if (!btn) return;
+  btn.style.display = "inline-block";
+  if (isTracking) {
+    btn.textContent = "Stop Tracking";
+    btn.style.background = "#ef4444";
+    btn.style.borderColor = "#ef4444";
+  } else {
+    btn.textContent = "Start Tracking";
+    btn.style.background = "#22c55e";
+    btn.style.borderColor = "#22c55e";
+  }
+}
+
+async function toggleTracking() {
+  if (!confirm(`Are you sure you want to ${isTracking ? 'STOP' : 'START'} saving all incoming API events to the database?`)) return;
+  
+  try {
+    const res = await fetch(api()+"/settings/tracking", {
+      method: "POST",
+      headers: Object.assign({}, headers(), {"Content-Type": "application/json"}),
+      body: JSON.stringify({ enabled: !isTracking })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      isTracking = data.tracking_enabled;
+      updateTrackingBtn();
+    } else {
+      alert("Failed to update tracking setting");
+    }
+  } catch(e) {
+    console.error(e);
+    alert("Error updating tracking setting");
+  }
+}
+

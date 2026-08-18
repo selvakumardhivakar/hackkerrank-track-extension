@@ -42,6 +42,11 @@ def init_db():
                   contest_url TEXT PRIMARY KEY,
                   passcode_hash TEXT NOT NULL
                 )""")
+                c.execute("""CREATE TABLE IF NOT EXISTS app_settings(
+                  key TEXT PRIMARY KEY,
+                  value TEXT NOT NULL
+                )""")
+                c.execute("""INSERT INTO app_settings (key, value) VALUES ('tracking_enabled', 'true') ON CONFLICT (key) DO NOTHING""")
             conn.commit()
     except Exception as e:
         logging.error(f"Failed to initialize database: {e}")
@@ -70,11 +75,48 @@ class SetPasscodeRequest(BaseModel):
 def _passcode_hash(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
 
+def is_tracking_enabled() -> bool:
+    try:
+        with get_db() as conn:
+            with conn.cursor() as c:
+                c.execute("SELECT value FROM app_settings WHERE key='tracking_enabled'")
+                row = c.fetchone()
+                if row:
+                    return row[0] == 'true'
+    except Exception as e:
+        logging.error(f"Failed to fetch tracking status: {e}")
+    return True
+
 @app.get("/api/health")
 def health(): return {"status":"ok","database":"postgres"}
 
+class TrackingSettingRequest(BaseModel):
+    enabled: bool
+
+@app.post("/api/settings/tracking")
+def set_tracking(req: TrackingSettingRequest, x_admin_key:str=Header(default="")):
+    auth(x_admin_key)
+    val = 'true' if req.enabled else 'false'
+    with get_db() as conn:
+        with conn.cursor() as c:
+            c.execute("""
+                INSERT INTO app_settings (key, value)
+                VALUES ('tracking_enabled', %s)
+                ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
+            """, (val,))
+        conn.commit()
+    return {"ok": True, "tracking_enabled": req.enabled}
+
+@app.get("/api/settings/tracking")
+def get_tracking(x_admin_key:str=Header(default="")):
+    auth(x_admin_key)
+    return {"ok": True, "tracking_enabled": is_tracking_enabled()}
+
 @app.post("/api/events")
 def create_event(e:Event):
+    if not is_tracking_enabled():
+        return {"ok":True,"ignored":True,"message":"Tracking is globally disabled."}
+    
     ts=e.timestamp or datetime.now(timezone.utc).isoformat()
     with get_db() as conn:
         with conn.cursor() as c:
