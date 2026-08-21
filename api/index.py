@@ -182,12 +182,23 @@ def candidates(contestUrl: Optional[str]=None, x_admin_key:str=Header(default=""
                     c.execute(q, [cid]+([contestUrl] if contestUrl else [])+types)
                     return c.fetchone()[0]
                 
-                c.execute("SELECT details FROM events WHERE candidate_id=%s"+contest_clause+" ORDER BY id DESC LIMIT 1", [cid]+([contestUrl] if contestUrl else []))
-                details_str = c.fetchone()[0]
-                try:
-                    details_json = json.loads(details_str)
-                except:
-                    details_json = {}
+                c.execute("SELECT details FROM events WHERE candidate_id=%s"+contest_clause+" ORDER BY id DESC LIMIT 10", [cid]+([contestUrl] if contestUrl else []))
+                details_rows = c.fetchall()
+                
+                details_json = {"studentName": "", "studentRegId": "", "hackerRankId": ""}
+                for row in details_rows:
+                    try:
+                        dj = json.loads(row[0])
+                        if not details_json["studentName"] and dj.get("studentName"):
+                            details_json["studentName"] = dj.get("studentName")
+                        if not details_json["studentRegId"] and dj.get("studentRegId"):
+                            details_json["studentRegId"] = dj.get("studentRegId")
+                        if not details_json["hackerRankId"] and dj.get("hackerRankId"):
+                            details_json["hackerRankId"] = dj.get("hackerRankId")
+                        if details_json["studentName"] and details_json["studentRegId"] and details_json["hackerRankId"]:
+                            break
+                    except:
+                        pass
                 
                 tab=n(["TAB_SWITCH_AWAY"])
                 esc=n(["ESCAPE_KEY"])
