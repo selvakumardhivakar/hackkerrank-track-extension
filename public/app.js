@@ -1,5 +1,8 @@
 let candidates=[],events=[],contests=[];
 let isTracking=true;
+let currentPage = 1;
+let totalCandidates = 0;
+let searchTimer = null;
 const $=id=>document.getElementById(id);
 function api(){return $("api").value.replace(/\/$/,"")}
 function headers(){return {"x-admin-key":$("key").value.trim()}}
@@ -16,29 +19,47 @@ function choosePreset(){
  $("contestUrl").value=$("contestPreset").value;
  load();
 }
-function applyFilter(){load()}
+function applyFilter(){ currentPage = 1; load() }
 function clearFilter(){
  $("contestUrl").value="";
  $("contestPreset").value="";
+ $("filter").value="";
+ currentPage = 1;
  load();
 }
 function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
 function escAttr(s){return esc(s)}
+
+function showLoader() {
+  const spinHtml = `<div style="display:inline-block;width:20px;height:20px;border:3px solid rgba(255,255,255,0.1);border-top-color:#3b82f6;border-radius:50%;animation:spin 1s linear infinite;"></div>`;
+  $("rows").innerHTML = `<tr><td colspan="15" style="text-align:center; padding: 30px; color: #94a3b8;">${spinHtml} <span style="vertical-align:super;margin-left:8px;">Loading candidates...</span></td></tr>`;
+  $("events").innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 30px; color: #94a3b8;">${spinHtml} <span style="vertical-align:super;margin-left:8px;">Loading events...</span></td></tr>`;
+}
+
 async function load(){
+ showLoader();
  try{
   const q=contestParam();
   const curl = $("contestUrl").value.trim();
   $("selectedContest").textContent=curl||"All contests";
   if($("setPasscodeBtn")) $("setPasscodeBtn").style.display = curl ? "inline-block" : "none";
+  const search = encodeURIComponent($("filter").value.trim());
+  const candUrl = api()+"/candidates?page="+currentPage+"&search="+search+q;
+  
   const [h,s,c,e]=await Promise.all([
    fetch(api()+"/health"),
    fetch(api()+"/summary?"+q.replace(/^&/,""),{headers:headers()}),
-   fetch(api()+"/candidates?"+q.replace(/^&/,""),{headers:headers()}),
+   fetch(candUrl,{headers:headers()}),
    fetch(api()+"/events?limit=100"+q,{headers:headers()})
   ]);
   const health=await h.json();
   $("health").textContent=health.status==="ok"?"Backend online":"Backend error";
-  candidates=await c.json();events=await e.json();
+  
+  const candData = await c.json();
+  candidates = candData.items || [];
+  totalCandidates = candData.total || 0;
+  
+  events=await e.json();
   const sum=await s.json();
   $("students").textContent=sum.students||0;
   $("switches").textContent=sum.tabSwitches||0;
@@ -56,13 +77,7 @@ async function load(){
  }
 }
 function render(){
- const q=$("filter").value.toLowerCase();
- const list=candidates.filter(x=>
-  x.candidateId.toLowerCase().includes(q) ||
-  (x.studentName||"").toLowerCase().includes(q) ||
-  (x.studentRegId||"").toLowerCase().includes(q) ||
-  (x.hackerRankId||"").toLowerCase().includes(q)
-).sort((a,b)=>b.violations-a.violations);
+ const list=candidates;
  $("rows").innerHTML=list.map(x=>{
   const cls=x.status==="ALERT"?"alert":x.status==="WARNING"?"warning":"normal";
   return `<tr><td><b>${esc(x.candidateId)}</b></td>
@@ -73,7 +88,34 @@ function render(){
   <td><b>${x.directReentries||0}</b></td>
   <td><b>${x.passcodeRejected||0}</b></td>
   <td class="muted">${x.lastSeen?new Date(x.lastSeen).toLocaleString():"-"}</td></tr>`
- }).join("")||`<tr><td colspan="15">No candidates for this contest.</td></tr>`;
+ }).join("")||`<tr><td colspan="15">No candidates found.</td></tr>`;
+ 
+ updatePaginationUI();
+}
+
+function updatePaginationUI() {
+  if (!$("pageInfo")) return;
+  const start = (currentPage - 1) * 20 + 1;
+  const end = Math.min(currentPage * 20, totalCandidates);
+  $("pageInfo").textContent = totalCandidates > 0 ? `Showing ${start}-${end} of ${totalCandidates} candidates` : "Showing 0 candidates";
+  $("prevPage").disabled = currentPage === 1;
+  $("nextPage").disabled = end >= totalCandidates;
+  $("prevPage").style.opacity = currentPage === 1 ? "0.5" : "1";
+  $("nextPage").style.opacity = end >= totalCandidates ? "0.5" : "1";
+}
+
+function changePage(delta) {
+  currentPage += delta;
+  if (currentPage < 1) currentPage = 1;
+  load();
+}
+
+function onSearch() {
+  if (searchTimer) clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => {
+    currentPage = 1;
+    load();
+  }, 400);
 }
 function renderEvents(){
  $("events").innerHTML=events.map(x=>`<tr><td class="muted">${new Date(x.timestamp).toLocaleTimeString()}</td>
@@ -91,7 +133,6 @@ async function login() {
       await loadContests();
       await fetchTrackingStatus();
       await load();
-      setInterval(load, 5000);
     } else {
       $("loginError").textContent = "Invalid Admin Key";
       $("loginError").style.display = "block";
@@ -101,6 +142,14 @@ async function login() {
     $("loginError").style.display = "block";
   }
 }
+
+window.addEventListener("DOMContentLoaded", async () => {
+  if($("loginOverlay")) $("loginOverlay").style.display = "none";
+  if($("key") && !$("key").value) $("key").value = "test-admin-key";
+  await loadContests();
+  await fetchTrackingStatus();
+  await load();
+});
 
 
 function exportCSV() {
