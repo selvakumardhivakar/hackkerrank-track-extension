@@ -140,7 +140,7 @@ def summary(contestUrl: Optional[str]=None, strictHr: bool=False, x_admin_key:st
         args.append(contestUrl)
     if strictHr:
         contest_clause += " AND (details::json->>'url' IS NULL OR details::json->>'url' ILIKE %s)"
-        args.append('%hackerrank.com/karunya%')
+        args.append('%hackerrank.com%karunya%')
         
     with get_db() as conn:
         with conn.cursor() as c:
@@ -179,7 +179,7 @@ def candidates(contestUrl: Optional[str]=None, strictHr: bool=False, page: int=1
     
     if strictHr:
         contest_clause += " AND (details::json->>'url' IS NULL OR details::json->>'url' ILIKE %s)"
-        args.append('%hackerrank.com/karunya%')
+        args.append('%hackerrank.com%karunya%')
         
     offset = (page - 1) * limit
     search_term = f"%{search}%"
@@ -309,7 +309,7 @@ def events(limit:int=500, contestUrl: Optional[str]=None, candidateId: Optional[
                 args.append(candidateId)
             if strictHr:
                 query += " AND (details::json->>'url' IS NULL OR details::json->>'url' ILIKE %s)"
-                args.append('%hackerrank.com/karunya%')
+                args.append('%hackerrank.com%karunya%')
             
             query += " ORDER BY id DESC LIMIT %s"
             args.append(min(limit,5000))
