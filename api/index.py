@@ -287,19 +287,25 @@ def verify_passcode(req: PasscodeRequest):
     return {"ok": ok, "message": "Passcode accepted." if ok else "Invalid passcode."}
 
 @app.get("/api/events")
-def events(limit:int=500, contestUrl: Optional[str]=None, x_admin_key:str=Header(default="")):
+def events(limit:int=500, contestUrl: Optional[str]=None, candidateId: Optional[str]=None, x_admin_key:str=Header(default="")):
     auth(x_admin_key)
     with get_db() as conn:
         with conn.cursor() as c:
+            query = "SELECT id,candidate_id,contest_url,event_type,timestamp,details FROM events WHERE 1=1"
+            args = []
             if contestUrl:
-                c.execute("""SELECT id,candidate_id,contest_url,event_type,
-                timestamp,details FROM events WHERE contest_url=%s ORDER BY id DESC LIMIT %s""",
-                (contestUrl,min(limit,5000)))
-            else:
-                c.execute("""SELECT id,candidate_id,contest_url,event_type,
-                timestamp,details FROM events ORDER BY id DESC LIMIT %s""",
-                (min(limit,5000),))
+                query += " AND contest_url=%s"
+                args.append(contestUrl)
+            if candidateId:
+                query += " AND candidate_id=%s"
+                args.append(candidateId)
+            
+            query += " ORDER BY id DESC LIMIT %s"
+            args.append(min(limit,5000))
+            
+            c.execute(query, args)
             rows = c.fetchall()
+            
     return [{"id":r[0],"candidateId":r[1],"contestUrl":r[2],
       "eventType":r[3],"timestamp":r[4],"details":json.loads(r[5])} for r in rows]
 

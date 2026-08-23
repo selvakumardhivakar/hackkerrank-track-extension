@@ -3,6 +3,7 @@ let isTracking=true;
 let currentPage = 1;
 let totalCandidates = 0;
 let searchTimer = null;
+let selectedCandidateId = null;
 const $=id=>document.getElementById(id);
 function api(){return $("api").value.replace(/\/$/,"")}
 function headers(){return {"x-admin-key":$("key").value.trim()}}
@@ -46,11 +47,16 @@ async function load(){
   const search = encodeURIComponent($("filter").value.trim());
   const candUrl = api()+"/candidates?page="+currentPage+"&search="+search+q;
   
+  let eventsUrl = api()+"/events?limit=100"+q;
+  if (selectedCandidateId) {
+    eventsUrl += "&candidateId=" + encodeURIComponent(selectedCandidateId);
+  }
+  
   const [h,s,c,e]=await Promise.all([
    fetch(api()+"/health"),
    fetch(api()+"/summary?"+q.replace(/^&/,""),{headers:headers()}),
    fetch(candUrl,{headers:headers()}),
-   fetch(api()+"/events?limit=100"+q,{headers:headers()})
+   fetch(eventsUrl,{headers:headers()})
   ]);
   const health=await h.json();
   $("health").textContent=health.status==="ok"?"Backend online":"Backend error";
@@ -80,14 +86,14 @@ function render(){
  const list=candidates;
  $("rows").innerHTML=list.map(x=>{
   const cls=x.status==="ALERT"?"alert":x.status==="WARNING"?"warning":"normal";
-  return `<tr><td><b>${esc(x.candidateId)}</b></td>
+  return `<tr><td><b><a href="#" onclick="filterByCandidate('${esc(x.candidateId)}'); return false;" style="color:#2563eb;text-decoration:none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">${esc(x.candidateId)}</a></b></td>
   <td>${esc(x.studentName)}</td><td>${esc(x.studentRegId)}</td><td>${esc(x.hackerRankId)}</td>
   <td><span class="badge ${cls}">${x.status}</span></td>
   <td>${x.tabSwitches}</td><td>${x.escapes}</td><td>${x.fullscreenExits}</td><td>${x.navigatedAway}</td>
   <td>${x.focusLost}</td><td>${x.sessionStarts}</td><td><b>${x.reentries}</b></td>
   <td><b>${x.directReentries||0}</b></td>
   <td><b>${x.passcodeRejected||0}</b></td>
-  <td class="muted">${x.lastSeen?new Date(x.lastSeen).toLocaleString():"-"}</td></tr>`
+  <td class="muted">${x.lastSeen?new Date(x.lastSeen).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }):"-"}</td></tr>`
  }).join("")||`<tr><td colspan="15">No candidates found.</td></tr>`;
  
  updatePaginationUI();
@@ -117,8 +123,24 @@ function onSearch() {
     load();
   }, 400);
 }
+
+function filterByCandidate(cid) {
+  selectedCandidateId = cid;
+  if($("eventSubtitle")) $("eventSubtitle").textContent = `Showing events for candidate: ${cid}`;
+  if($("clearEventFilterBtn")) $("clearEventFilterBtn").style.display = "inline-block";
+  $("events").scrollIntoView({behavior: "smooth"});
+  load();
+}
+
+function clearEventFilter() {
+  selectedCandidateId = null;
+  if($("eventSubtitle")) $("eventSubtitle").textContent = "Latest 100 events for selected contest";
+  if($("clearEventFilterBtn")) $("clearEventFilterBtn").style.display = "none";
+  load();
+}
+
 function renderEvents(){
- $("events").innerHTML=events.map(x=>`<tr><td class="muted">${new Date(x.timestamp).toLocaleTimeString()}</td>
+ $("events").innerHTML=events.map(x=>`<tr><td class="muted">${new Date(x.timestamp).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata' })}</td>
  <td><b>${esc(x.candidateId)}</b></td><td class="muted">${esc(x.contestUrl)}</td>
  <td class="event">${esc(x.eventType)}</td><td class="muted">${esc(JSON.stringify(x.details||{}))}</td></tr>`).join("");
 }
