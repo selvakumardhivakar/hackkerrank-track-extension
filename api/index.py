@@ -165,72 +165,81 @@ def summary(contestUrl: Optional[str]=None, x_admin_key:str=Header(default="")):
             }
 
 @app.get("/api/candidates")
-def candidates(contestUrl: Optional[str]=None, x_admin_key:str=Header(default="")):
+def candidates(contestUrl: Optional[str]=None, page: int=1, limit: int=20, search: str="", x_admin_key:str=Header(default="")):
     auth(x_admin_key)
     contest_clause = " AND contest_url=%s" if contestUrl else ""
     args=[contestUrl] if contestUrl else []
     
+    offset = (page - 1) * limit
+    search_term = f"%{search}%"
+    
+    query = f"""
+    WITH grouped AS (
+        SELECT 
+            candidate_id, 
+            MAX(timestamp) as last_seen,
+            MAX(CASE WHEN details::json->>'studentName' != '' THEN details::json->>'studentName' ELSE '' END) as studentName,
+            MAX(CASE WHEN details::json->>'studentRegId' != '' THEN details::json->>'studentRegId' ELSE '' END) as studentRegId,
+            MAX(CASE WHEN details::json->>'hackerRankId' != '' THEN details::json->>'hackerRankId' ELSE '' END) as hackerRankId,
+            SUM(CASE WHEN event_type = 'TAB_SWITCH_AWAY' THEN 1 ELSE 0 END) as tab,
+            SUM(CASE WHEN event_type = 'ESCAPE_KEY' THEN 1 ELSE 0 END) as esc,
+            SUM(CASE WHEN event_type = 'BROWSER_FULLSCREEN_EXIT' THEN 1 ELSE 0 END) as fs,
+            SUM(CASE WHEN event_type = 'NAVIGATED_AWAY' THEN 1 ELSE 0 END) as away,
+            SUM(CASE WHEN event_type = 'CONTEST_SESSION_START' THEN 1 ELSE 0 END) as starts,
+            SUM(CASE WHEN event_type IN ('CONTEST_SESSION_REENTRY','CONTEST_DIRECT_REENTRY') THEN 1 ELSE 0 END) as reentries,
+            SUM(CASE WHEN event_type = 'CONTEST_SESSION_REENTRY' THEN 1 ELSE 0 END) as extensionReentries,
+            SUM(CASE WHEN event_type = 'CONTEST_DIRECT_REENTRY' THEN 1 ELSE 0 END) as directReentries,
+            SUM(CASE WHEN event_type = 'FULLSCREEN_PASSCODE_ACCEPTED' THEN 1 ELSE 0 END) as passcodeAccepted,
+            SUM(CASE WHEN event_type = 'FULLSCREEN_PASSCODE_REJECTED' THEN 1 ELSE 0 END) as passcodeRejected,
+            SUM(CASE WHEN event_type = 'BROWSER_FOCUS_LOST' THEN 1 ELSE 0 END) as focus,
+            SUM(CASE WHEN event_type IN ('TAB_SWITCH_AWAY', 'ESCAPE_KEY', 'BROWSER_FULLSCREEN_EXIT', 'NAVIGATED_AWAY', 'BROWSER_FOCUS_LOST') THEN 1 ELSE 0 END) as violations
+        FROM events
+        WHERE 1=1 {contest_clause}
+        GROUP BY candidate_id
+    )
+    SELECT * FROM grouped
+    WHERE (candidate_id ILIKE %s OR studentName ILIKE %s OR studentRegId ILIKE %s OR hackerRankId ILIKE %s)
+    """
+    
     with get_db() as conn:
         with conn.cursor() as c:
-            c.execute("SELECT candidate_id, MAX(timestamp) FROM events WHERE 1=1"+contest_clause+" GROUP BY candidate_id ORDER BY candidate_id", args)
+            # Get total count
+            count_args = args + [search_term, search_term, search_term, search_term]
+            c.execute(f"SELECT COUNT(*) FROM ({query}) AS t", count_args)
+            total = c.fetchone()[0]
+            
+            # Get paginated data
+            paginated_query = query + " ORDER BY violations DESC, candidate_id ASC LIMIT %s OFFSET %s"
+            data_args = count_args + [limit, offset]
+            c.execute(paginated_query, data_args)
             rows = c.fetchall()
             
-            out=[]
-            for cid, last in rows:
-                def n(types):
-                    q="SELECT COUNT(*) FROM events WHERE candidate_id=%s"+contest_clause+" AND event_type IN ("+",".join(["%s"]*len(types))+")"
-                    c.execute(q, [cid]+([contestUrl] if contestUrl else [])+types)
-                    return c.fetchone()[0]
-                
-                c.execute("SELECT details FROM events WHERE candidate_id=%s"+contest_clause+" ORDER BY id DESC LIMIT 10", [cid]+([contestUrl] if contestUrl else []))
-                details_rows = c.fetchall()
-                
-                details_json = {"studentName": "", "studentRegId": "", "hackerRankId": ""}
-                for row in details_rows:
-                    try:
-                        dj = json.loads(row[0])
-                        if not details_json["studentName"] and dj.get("studentName"):
-                            details_json["studentName"] = dj.get("studentName")
-                        if not details_json["studentRegId"] and dj.get("studentRegId"):
-                            details_json["studentRegId"] = dj.get("studentRegId")
-                        if not details_json["hackerRankId"] and dj.get("hackerRankId"):
-                            details_json["hackerRankId"] = dj.get("hackerRankId")
-                        if details_json["studentName"] and details_json["studentRegId"] and details_json["hackerRankId"]:
-                            break
-                    except:
-                        pass
-                
-                tab=n(["TAB_SWITCH_AWAY"])
-                esc=n(["ESCAPE_KEY"])
-                fs=n(["BROWSER_FULLSCREEN_EXIT"])
-                away=n(["NAVIGATED_AWAY"])
-                starts=n(["CONTEST_SESSION_START"])
-                reentries=n(["CONTEST_SESSION_REENTRY","CONTEST_DIRECT_REENTRY"])
-                extensionReentries=n(["CONTEST_SESSION_REENTRY"])
-                directReentries=n(["CONTEST_DIRECT_REENTRY"])
-                passcodeAccepted=n(["FULLSCREEN_PASSCODE_ACCEPTED"])
-                passcodeRejected=n(["FULLSCREEN_PASSCODE_REJECTED"])
-                focus=n(["BROWSER_FOCUS_LOST"])
-                
-                violations=tab+esc+fs+away+focus
+            out = []
+            for r in rows:
+                violations = int(r[16])
                 status="ALERT" if violations>=5 else ("WARNING" if violations>0 else "NORMAL")
                 out.append({
-                  "candidateId":cid,
-                  "studentName":details_json.get("studentName", ""),
-                  "studentRegId":details_json.get("studentRegId", ""),
-                  "hackerRankId":details_json.get("hackerRankId", ""),
-                  "tabSwitches":tab,"escapes":esc,
-                  "fullscreenExits":fs,"navigatedAway":away,
-                  "focusLost":focus,"sessionStarts":starts,
-                  "reentries":reentries,
-                  "extensionReentries":extensionReentries,
-                  "directReentries":directReentries,
-                  "passcodeAccepted":passcodeAccepted,
-                  "passcodeRejected":passcodeRejected,
-                  "lastSeen":last,
-                  "violations":violations,"status":status
+                  "candidateId": r[0],
+                  "lastSeen": r[1],
+                  "studentName": r[2],
+                  "studentRegId": r[3],
+                  "hackerRankId": r[4],
+                  "tabSwitches": int(r[5]),
+                  "escapes": int(r[6]),
+                  "fullscreenExits": int(r[7]),
+                  "navigatedAway": int(r[8]),
+                  "sessionStarts": int(r[9]),
+                  "reentries": int(r[10]),
+                  "extensionReentries": int(r[11]),
+                  "directReentries": int(r[12]),
+                  "passcodeAccepted": int(r[13]),
+                  "passcodeRejected": int(r[14]),
+                  "focusLost": int(r[15]),
+                  "violations": violations,
+                  "status": status
                 })
-    return out
+                
+    return {"items": out, "total": total, "page": page, "limit": limit}
 
 
 @app.post("/api/contests/passcode")
