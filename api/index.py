@@ -131,21 +131,28 @@ def create_event(payload: Union[Event, List[Event]]):
     return {"ok":True}
 
 @app.get("/api/summary")
-def summary(contestUrl: Optional[str]=None, x_admin_key:str=Header(default="")):
+def summary(contestUrl: Optional[str]=None, strictHr: bool=False, x_admin_key:str=Header(default="")):
     auth(x_admin_key)
-    where = " WHERE contest_url = %s" if contestUrl else ""
-    base_args = [contestUrl] if contestUrl else []
+    contest_clause = " WHERE 1=1"
+    args = []
+    if contestUrl:
+        contest_clause += " AND contest_url = %s"
+        args.append(contestUrl)
+    if strictHr:
+        contest_clause += " AND (details::json->>'url' IS NULL OR details::json->>'url' ILIKE %s)"
+        args.append('%hackerrank.com/karunya%')
+        
     with get_db() as conn:
         with conn.cursor() as c:
-            c.execute("SELECT COUNT(DISTINCT candidate_id) FROM events"+where, base_args)
+            c.execute("SELECT COUNT(DISTINCT candidate_id) FROM events"+contest_clause, args)
             total = c.fetchone()[0]
-            c.execute("SELECT COUNT(*) FROM events"+where, base_args)
+            c.execute("SELECT COUNT(*) FROM events"+contest_clause, args)
             events = c.fetchone()[0]
             
             def count(types):
                 marks=",".join(["%s"]*len(types))
-                q="SELECT COUNT(*) FROM events"+where+(" AND " if where else " WHERE ")+f"event_type IN ({marks})"
-                c.execute(q, base_args+types)
+                q="SELECT COUNT(*) FROM events"+contest_clause+f" AND event_type IN ({marks})"
+                c.execute(q, args+types)
                 return c.fetchone()[0]
             
             return {
@@ -165,11 +172,15 @@ def summary(contestUrl: Optional[str]=None, x_admin_key:str=Header(default="")):
             }
 
 @app.get("/api/candidates")
-def candidates(contestUrl: Optional[str]=None, page: int=1, limit: int=20, search: str="", x_admin_key:str=Header(default="")):
+def candidates(contestUrl: Optional[str]=None, strictHr: bool=False, page: int=1, limit: int=20, search: str="", x_admin_key:str=Header(default="")):
     auth(x_admin_key)
     contest_clause = " AND contest_url=%s" if contestUrl else ""
     args=[contestUrl] if contestUrl else []
     
+    if strictHr:
+        contest_clause += " AND (details::json->>'url' IS NULL OR details::json->>'url' ILIKE %s)"
+        args.append('%hackerrank.com/karunya%')
+        
     offset = (page - 1) * limit
     search_term = f"%{search}%"
     
@@ -203,10 +214,7 @@ def candidates(contestUrl: Optional[str]=None, page: int=1, limit: int=20, searc
     
     with get_db() as conn:
         with conn.cursor() as c:
-            # Get total count
             count_args = args + [search_term, search_term, search_term, search_term]
-            c.execute(f"SELECT COUNT(*) FROM ({query}) AS t", count_args)
-            total = c.fetchone()[0]
             
             # Get paginated data
             paginated_query = query + " ORDER BY violations DESC, candidate_id ASC LIMIT %s OFFSET %s"
@@ -239,7 +247,7 @@ def candidates(contestUrl: Optional[str]=None, page: int=1, limit: int=20, searc
                   "status": status
                 })
                 
-    return {"items": out, "total": total, "page": page, "limit": limit}
+    return {"items": out, "total": -1, "page": page, "limit": limit}
 
 
 @app.post("/api/contests/passcode")
@@ -287,7 +295,7 @@ def verify_passcode(req: PasscodeRequest):
     return {"ok": ok, "message": "Passcode accepted." if ok else "Invalid passcode."}
 
 @app.get("/api/events")
-def events(limit:int=500, contestUrl: Optional[str]=None, candidateId: Optional[str]=None, x_admin_key:str=Header(default="")):
+def events(limit:int=500, contestUrl: Optional[str]=None, candidateId: Optional[str]=None, strictHr:Optional[bool]=None, x_admin_key:str=Header(default="")):
     auth(x_admin_key)
     with get_db() as conn:
         with conn.cursor() as c:
@@ -299,6 +307,9 @@ def events(limit:int=500, contestUrl: Optional[str]=None, candidateId: Optional[
             if candidateId:
                 query += " AND candidate_id=%s"
                 args.append(candidateId)
+            if strictHr:
+                query += " AND (details::json->>'url' IS NULL OR details::json->>'url' ILIKE %s)"
+                args.append('%hackerrank.com/karunya%')
             
             query += " ORDER BY id DESC LIMIT %s"
             args.append(min(limit,5000))

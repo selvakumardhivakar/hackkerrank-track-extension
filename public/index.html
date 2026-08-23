@@ -1,81 +1,314 @@
 <!doctype html>
-<html>
-<head><meta charset="utf-8"><title>HackerRank Contest Tracking</title><link rel="stylesheet" href="style.css"><style>@keyframes spin { 100% { transform: rotate(360deg); } }</style></head>
-<body>
+<html lang="en" class="antialiased">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HackerRank Contest Tracking</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --bg-body: #f8fafc; /* slate-50 */
+      --bg-surface: #ffffff;
+      --bg-surface-alt: #f1f5f9; /* slate-100 */
+      --bg-surface-hover: #e2e8f0; /* slate-200 */
+      
+      --text-main: #0f172a; /* slate-900 */
+      --text-secondary: #334155; /* slate-700 */
+      --text-muted: #64748b; /* slate-500 */
+      
+      --border-main: #e2e8f0; /* slate-200 */
+      --border-focus: #cbd5e1; /* slate-300 */
+    }
+    
+    html.dark {
+      --bg-body: #0f172a; /* slate-900 */
+      --bg-surface: rgba(30, 41, 59, 0.4); /* slate-800/40 */
+      --bg-surface-alt: rgba(30, 41, 59, 0.6); /* slate-800/60 */
+      --bg-surface-hover: rgba(51, 65, 85, 0.5); /* slate-700/50 */
+      
+      --text-main: #f8fafc; /* slate-50 */
+      --text-secondary: #cbd5e1; /* slate-300 */
+      --text-muted: #94a3b8; /* slate-400 */
+      
+      --border-main: rgba(51, 65, 85, 0.6); /* slate-700/60 */
+      --border-focus: rgba(71, 85, 105, 0.8); /* slate-600/80 */
+    }
+  </style>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              400: '#38bdf8',
+              500: '#0ea5e9',
+              600: '#0284c7',
+            },
+            theme: {
+              body: 'var(--bg-body)',
+              surface: 'var(--bg-surface)',
+              'surface-alt': 'var(--bg-surface-alt)',
+              'surface-hover': 'var(--bg-surface-hover)',
+              text: 'var(--text-main)',
+              'text-secondary': 'var(--text-secondary)',
+              'text-muted': 'var(--text-muted)',
+              border: 'var(--border-main)',
+              'border-focus': 'var(--border-focus)',
+            }
+          },
+          animation: {
+            'spin-slow': 'spin 3s linear infinite',
+            'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="min-h-screen flex flex-col bg-theme-body text-theme-text transition-colors duration-200">
 
-<div id="loginOverlay" style="position:fixed;inset:0;background:linear-gradient(135deg, #0f172a 0%, #1e293b 100%);z-index:9999;display:flex;align-items:center;justify-content:center;color:#fff;font-family:Inter,sans-serif;">
-  <div style="background:rgba(30, 41, 59, 0.7);backdrop-filter:blur(10px);padding:50px 40px;border-radius:16px;width:380px;text-align:center;box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.1);">
-    <div style="width:60px;height:60px;background:linear-gradient(135deg, #3b82f6, #2dd4bf);border-radius:12px;margin:0 auto 20px;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 15px -3px rgba(59, 130, 246, 0.5);">
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#fff;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+<!-- Login Overlay -->
+<div id="loginOverlay" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
+  <div class="bg-theme-surface border border-theme-border p-8 sm:p-10 rounded-2xl w-full max-w-md text-center shadow-[0_0_50px_-12px_rgba(56,189,248,0.15)] backdrop-blur-xl">
+    <div class="w-16 h-16 bg-gradient-to-br from-brand-400 to-indigo-600 rounded-xl mx-auto mb-6 flex items-center justify-center shadow-lg shadow-brand-500/30">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
     </div>
-    <div style="font-size:12px;font-weight:700;color:#94a3b8;letter-spacing:1.5px;margin-bottom:8px;">HACKERRANK • ADMIN CONSOLE</div>
-    <h2 style="margin-top:0;margin-bottom:8px;font-size:24px;font-weight:600;">Welcome Back</h2>
-    <p style="color:#cbd5e1;font-size:14px;margin-bottom:30px;">Please enter your admin key to continue</p>
-    <div style="text-align:left;margin-bottom:20px;">
-      <label style="display:block;font-size:12px;font-weight:600;color:#94a3b8;margin-bottom:8px;">Admin Key</label>
-      <input type="password" id="loginKey" placeholder="••••••••" style="width:100%;padding:14px;border-radius:8px;border:1px solid #334155;background:#0f172a;color:white;box-sizing:border-box;font-size:15px;outline:none;transition:border-color 0.2s;" onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='#334155'" onkeydown="if(event.key==='Enter') login()">
+    <div class="text-[11px] font-bold text-brand-400 tracking-[0.15em] mb-2 uppercase">HackerRank • Admin Console</div>
+    <h2 class="text-2xl font-bold text-theme-text mb-2">Welcome Back</h2>
+    <p class="text-theme-text-muted text-sm mb-8">Please enter your admin key to continue</p>
+    
+    <div class="text-left mb-6">
+      <label class="block text-xs font-semibold text-theme-text-muted mb-2 uppercase tracking-wide">Admin Key</label>
+      <input type="password" id="loginKey" placeholder="••••••••" 
+        class="w-full px-4 py-3 bg-theme-surface-alt border border-theme-border rounded-xl text-theme-text placeholder-theme-text-muted focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
+        onkeydown="if(event.key==='Enter') login()">
     </div>
-    <button onclick="login()" style="width:100%;padding:14px;background:linear-gradient(135deg, #3b82f6, #2563eb);color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:15px;transition:0.2s;box-shadow:0 4px 6px -1px rgba(59, 130, 246, 0.3);">Access Dashboard</button>
-    <div id="loginError" style="color:#ef4444;margin-top:15px;font-size:14px;display:none;background:rgba(239, 68, 68, 0.1);padding:10px;border-radius:6px;border:1px solid rgba(239, 68, 68, 0.2);">Invalid Admin Key</div>
+    
+    <button onclick="login()" class="w-full py-3.5 bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white font-semibold rounded-xl transition-all shadow-lg shadow-indigo-500/25 active:scale-[0.98]">
+      Access Dashboard
+    </button>
+    <div id="loginError" class="hidden mt-4 bg-red-500/10 border border-red-500/20 text-red-500 text-sm py-2.5 px-4 rounded-lg">
+      Invalid Admin Key
+    </div>
   </div>
 </div>
 
-<header>
- <div><div class="eyebrow">HACKERRANK • ADMIN CONSOLE</div><h1>HackerRank Contest Tracking</h1><div class="sub">Live integrity monitoring dashboard</div></div>
- <div class="online"><span id="dot"></span><span id="health">Connecting...</span></div>
-</header>
-<main>
-<section class="toolbar">
- <div class="wide"><label>HackerRank Contest URL — filter</label><input id="contestUrl" value="" placeholder="https://www.hackerrank.com/test-1787062056"></div>
- <div><label>Contest preset</label><select id="contestPreset" onchange="choosePreset()"><option value="">All contests</option></select></div>
- <div><label>API</label><input id="api" value="/api"></div>
- <div><label>Admin key</label><input id="key" type="password" value=""></div>
- <button onclick="applyFilter()">Apply filter</button>
- <button class="secondary" onclick="clearFilter()">All contests</button>
- <button class="secondary" onclick="exportCSV()">Export CSV</button>
- <button id="setPasscodeBtn" class="secondary" onclick="setContestPasscode()" style="display:none;background:#f59e0b;color:#fff;border-color:#f59e0b;">Set Passcode</button>
- <button id="trackingToggleBtn" class="secondary" onclick="toggleTracking()" style="background:#ef4444;color:#fff;border-color:#ef4444;display:none;">Stop Tracking</button>
-</section>
-
-<section class="selected">
- <b>Currently viewing:</b> <span id="selectedContest">All contests</span>
-</section>
-
-<section class="cards">
- <div class="card"><span>Students</span><b id="students">0</b><small>observed candidates</small></div>
- <div class="card"><span>Tab switches</span><b id="switches">0</b><small>away from contest</small></div>
- <div class="card"><span>Escape presses</span><b id="escapes">0</b><small>page-observed</small></div>
- <div class="card"><span>Fullscreen exits</span><b id="exits">0</b><small>browser + page</small></div>
- <div class="card"><span>Re-entries</span><b id="reentries">0</b><small>extension + direct return</small></div>
- <div class="card"><span>Direct returns</span><b id="directReentries">0</b><small>opened without extension</small></div>
- <div class="card"><span>Passcode rejects</span><b id="passcodeRejected">0</b><small>unauthorized attempts</small></div>
-</section>
-
-<section class="panel">
- <div class="panelhead">
-   <div><h2>Candidate risk board</h2><p>Filtered by selected HackerRank contest</p></div>
-   <div style="display:flex; gap:10px; align-items:center;">
-     <button onclick="load()" style="background:#10b981;color:white;border:none;padding:9px 14px;border-radius:6px;cursor:pointer;font-weight:500;font-size:13px;transition:0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">Fetch new data</button>
-     <input id="filter" oninput="onSearch()" placeholder="Search candidate...">
-   </div>
- </div>
- <div class="tablewrap"><table><thead><tr><th>Candidate ID</th><th>Name</th><th>Reg ID</th><th>HR ID</th><th>Status</th><th>Tab</th><th>Esc</th><th>FS Exit</th><th>Away</th><th>Focus</th><th>Start</th><th>Re-entry</th><th>Direct return</th><th>Passcode rejects</th><th>Last seen</th></tr></thead><tbody id="rows"></tbody></table></div>
- <div id="pagination" style="display:flex;justify-content:space-between;align-items:center;padding:15px 20px;border-top:1px solid #e2e8f0;background:#f8fafc;">
-    <div style="font-size:13px;color:#64748b;" id="pageInfo">Showing 0 candidates</div>
-    <div style="display:flex;gap:10px;">
-        <button id="prevPage" onclick="changePage(-1)" style="padding:6px 12px;border:1px solid #d0d5dd;border-radius:6px;background:#fff;cursor:pointer;color:#334155;font-size:13px;font-weight:500;">Previous</button>
-        <button id="nextPage" onclick="changePage(1)" style="padding:6px 12px;border:1px solid #d0d5dd;border-radius:6px;background:#fff;cursor:pointer;color:#334155;font-size:13px;font-weight:500;">Next</button>
+<!-- Header -->
+<header class="px-6 sm:px-10 py-6 border-b border-theme-border bg-theme-surface/80 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sticky top-0 z-30 backdrop-blur-xl">
+  <div>
+    <div class="text-[10px] font-bold tracking-[0.2em] text-brand-400 mb-1 uppercase">HackerRank • Admin Console</div>
+    <h1 class="text-2xl font-bold text-theme-text tracking-tight">Live Integrity Monitor</h1>
+  </div>
+  <div class="flex items-center gap-3">
+    <button onclick="toggleTheme()" class="p-2 rounded-lg bg-theme-surface-alt border border-theme-border text-theme-text-secondary hover:bg-theme-surface-hover transition-colors" title="Toggle Theme">
+      <svg id="themeIconDark" class="w-4 h-4 hidden dark:block" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+      <svg id="themeIconLight" class="w-4 h-4 block dark:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+    </button>
+    <div class="flex items-center gap-2.5 px-4 py-2 bg-theme-surface-alt rounded-full border border-theme-border backdrop-blur-md">
+      <span id="dot" class="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.6)] animate-pulse-slow"></span>
+      <span id="health" class="text-xs font-medium text-theme-text-secondary">Connecting...</span>
     </div>
- </div>
+  </div>
+</header>
+
+<script>
+  function toggleTheme() {
+    if (document.documentElement.classList.contains('dark')) {
+      document.documentElement.classList.remove('dark');
+      localStorage.theme = 'light';
+    } else {
+      document.documentElement.classList.add('dark');
+      localStorage.theme = 'dark';
+    }
+  }
+  if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    document.documentElement.classList.add('dark');
+  } else {
+    document.documentElement.classList.remove('dark');
+  }
+</script>
+
+<main class="flex-1 p-6 sm:p-10 max-w-[1600px] mx-auto w-full flex flex-col gap-8">
+
+<!-- Toolbar -->
+<section class="bg-theme-surface border border-theme-border rounded-2xl p-5 shadow-lg backdrop-blur-sm flex flex-wrap gap-4 items-end">
+  <div class="flex-1 min-w-[250px]">
+    <label class="block text-xs font-semibold text-theme-text-muted mb-2 uppercase tracking-wider">Contest URL Filter</label>
+    <input id="contestUrl" placeholder="https://www.hackerrank.com/..." class="w-full px-4 py-2.5 bg-theme-body border border-theme-border rounded-lg text-theme-text text-sm focus:outline-none focus:border-brand-500 transition-colors font-mono">
+  </div>
+  <div class="w-full sm:w-auto min-w-[200px]">
+    <label class="block text-xs font-semibold text-theme-text-muted mb-2 uppercase tracking-wider">Contest preset</label>
+    <select id="contestPreset" onchange="choosePreset()" class="w-full px-4 py-2.5 bg-theme-body border border-theme-border rounded-lg text-theme-text text-sm focus:outline-none focus:border-brand-500 transition-colors appearance-none">
+      <option value="">All contests</option>
+    </select>
+  </div>
+  <div class="w-32 hidden lg:block">
+    <label class="block text-xs font-semibold text-theme-text-muted mb-2 uppercase tracking-wider">API</label>
+    <input id="api" value="/api" class="w-full px-4 py-2.5 bg-theme-body border border-theme-border rounded-lg text-theme-text-muted text-sm focus:outline-none focus:border-brand-500 transition-colors">
+  </div>
+  <div class="w-32 hidden lg:block">
+    <label class="block text-xs font-semibold text-theme-text-muted mb-2 uppercase tracking-wider">Admin Key</label>
+    <input id="key" type="password" class="w-full px-4 py-2.5 bg-theme-body border border-theme-border rounded-lg text-theme-text-muted text-sm focus:outline-none focus:border-brand-500 transition-colors">
+  </div>
+  
+  <div class="flex gap-2 w-full sm:w-auto mt-2 sm:mt-0">
+    <button onclick="applyFilter()" class="flex-1 sm:flex-none px-5 py-2.5 bg-brand-600 hover:bg-brand-500 text-white text-sm font-medium rounded-lg transition-colors shadow-lg shadow-brand-500/20">Apply</button>
+    <button onclick="clearFilter()" class="flex-1 sm:flex-none px-5 py-2.5 bg-theme-surface-alt hover:bg-theme-surface-hover border border-theme-border text-theme-text text-sm font-medium rounded-lg transition-colors">Clear</button>
+    <button onclick="exportCSV()" class="px-5 py-2.5 bg-theme-surface-alt hover:bg-theme-surface-hover border border-theme-border text-theme-text text-sm font-medium rounded-lg transition-colors hidden sm:block">Export</button>
+    <button id="setPasscodeBtn" onclick="setContestPasscode()" class="hidden px-5 py-2.5 bg-amber-600 hover:bg-amber-500 text-white text-sm font-medium rounded-lg transition-colors shadow-lg shadow-amber-500/20">Passcode</button>
+    <button id="trackingToggleBtn" onclick="toggleTracking()" class="hidden px-5 py-2.5 bg-red-600 hover:bg-red-500 text-white text-sm font-medium rounded-lg transition-colors shadow-lg shadow-red-500/20">Stop</button>
+  </div>
 </section>
 
-<section class="panel">
- <div class="panelhead">
-   <div><h2>Recent events</h2><p id="eventSubtitle">Latest 100 events for selected contest</p></div>
-   <button id="clearEventFilterBtn" onclick="clearEventFilter()" style="display:none;background:#f8fafc;color:#475569;border:1px solid #cbd5e1;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;transition:0.2s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#f8fafc'">Clear filter</button>
- </div>
- <div class="tablewrap"><table><thead><tr><th>Time</th><th>Candidate</th><th>Contest</th><th>Event</th><th>Details</th></tr></thead><tbody id="events"></tbody></table></div>
+<!-- Selected Context -->
+<section class="flex items-center gap-3 px-5 py-3 bg-indigo-500/10 border border-indigo-500/20 rounded-xl">
+  <svg class="w-5 h-5 text-indigo-500 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+  <span class="text-sm text-indigo-700 dark:text-indigo-300">Currently viewing:</span>
+  <span id="selectedContest" class="text-sm font-mono font-medium text-indigo-800 dark:text-indigo-200 break-all">All contests</span>
 </section>
+
+<!-- Stats Cards -->
+<section class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-7 gap-4">
+  <div class="bg-theme-surface border border-theme-border rounded-2xl p-5 shadow-lg backdrop-blur-sm transition-all hover:-translate-y-1 hover:border-theme-focus hover:shadow-xl hover:bg-theme-surface-hover group">
+    <span class="block text-xs font-semibold text-theme-text-muted uppercase tracking-wider mb-1">Students</span>
+    <b id="students" class="block text-3xl font-bold text-theme-text mb-1 group-hover:text-brand-500 transition-colors">0</b>
+    <small class="text-xs text-theme-text-muted">observed candidates</small>
+  </div>
+  <div class="bg-theme-surface border border-theme-border rounded-2xl p-5 shadow-lg backdrop-blur-sm transition-all hover:-translate-y-1 hover:border-theme-focus hover:shadow-xl hover:bg-theme-surface-hover group">
+    <span class="block text-xs font-semibold text-theme-text-muted uppercase tracking-wider mb-1">Tab Switches</span>
+    <b id="switches" class="block text-3xl font-bold text-rose-500 dark:text-rose-400 mb-1 transition-colors">0</b>
+    <small class="text-xs text-theme-text-muted">away from contest</small>
+  </div>
+  <div class="bg-theme-surface border border-theme-border rounded-2xl p-5 shadow-lg backdrop-blur-sm transition-all hover:-translate-y-1 hover:border-theme-focus hover:shadow-xl hover:bg-theme-surface-hover group">
+    <span class="block text-xs font-semibold text-theme-text-muted uppercase tracking-wider mb-1">Esc Presses</span>
+    <b id="escapes" class="block text-3xl font-bold text-amber-500 dark:text-amber-400 mb-1 transition-colors">0</b>
+    <small class="text-xs text-theme-text-muted">page-observed</small>
+  </div>
+  <div class="bg-theme-surface border border-theme-border rounded-2xl p-5 shadow-lg backdrop-blur-sm transition-all hover:-translate-y-1 hover:border-theme-focus hover:shadow-xl hover:bg-theme-surface-hover group">
+    <span class="block text-xs font-semibold text-theme-text-muted uppercase tracking-wider mb-1">FS Exits</span>
+    <b id="exits" class="block text-3xl font-bold text-orange-500 dark:text-amber-500 mb-1 transition-colors">0</b>
+    <small class="text-xs text-theme-text-muted">browser + page</small>
+  </div>
+  <div class="bg-theme-surface border border-theme-border rounded-2xl p-5 shadow-lg backdrop-blur-sm transition-all hover:-translate-y-1 hover:border-theme-focus hover:shadow-xl hover:bg-theme-surface-hover group">
+    <span class="block text-xs font-semibold text-theme-text-muted uppercase tracking-wider mb-1">Re-entries</span>
+    <b id="reentries" class="block text-3xl font-bold text-emerald-600 dark:text-emerald-400 mb-1 transition-colors">0</b>
+    <small class="text-xs text-theme-text-muted">extension + direct</small>
+  </div>
+  <div class="bg-theme-surface border border-theme-border rounded-2xl p-5 shadow-lg backdrop-blur-sm transition-all hover:-translate-y-1 hover:border-theme-focus hover:shadow-xl hover:bg-theme-surface-hover group">
+    <span class="block text-xs font-semibold text-theme-text-muted uppercase tracking-wider mb-1">Direct Return</span>
+    <b id="directReentries" class="block text-3xl font-bold text-fuchsia-600 dark:text-fuchsia-400 mb-1 transition-colors">0</b>
+    <small class="text-xs text-theme-text-muted">no extension</small>
+  </div>
+  <div class="bg-theme-surface border border-theme-border rounded-2xl p-5 shadow-lg backdrop-blur-sm transition-all hover:-translate-y-1 hover:border-theme-focus hover:shadow-xl hover:bg-theme-surface-hover group">
+    <span class="block text-xs font-semibold text-theme-text-muted uppercase tracking-wider mb-1">Rejects</span>
+    <b id="passcodeRejected" class="block text-3xl font-bold text-red-600 dark:text-red-500 mb-1 transition-colors">0</b>
+    <small class="text-xs text-theme-text-muted">bad passcode</small>
+  </div>
+</section>
+
+<!-- Candidates Board -->
+<section class="bg-theme-surface border border-theme-border rounded-2xl shadow-lg backdrop-blur-sm overflow-hidden flex flex-col">
+  <div class="p-5 sm:p-6 border-b border-theme-border bg-theme-surface-alt flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div>
+      <h2 class="text-lg font-bold text-theme-text flex items-center gap-2">
+        <svg class="w-5 h-5 text-brand-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+        Candidate Risk Board
+      </h2>
+      <p class="text-xs text-theme-text-muted mt-1">Filtered by selected contest</p>
+    </div>
+    
+    <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+      <button onclick="load()" class="px-4 py-2 bg-theme-surface-hover border border-theme-border text-theme-text text-xs font-medium rounded-lg transition-colors flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+        Refresh
+      </button>
+      <input id="filter" oninput="onSearch()" placeholder="Search..." class="w-full sm:w-48 px-4 py-2 bg-theme-body border border-theme-border rounded-lg text-theme-text text-xs focus:outline-none focus:border-brand-500 transition-colors placeholder-theme-text-muted">
+      <label class="flex items-center gap-2 text-xs font-medium text-theme-text-secondary cursor-pointer hover:text-theme-text transition-colors bg-theme-surface-alt px-3 py-2 rounded-lg border border-theme-border">
+        <input type="checkbox" id="strictHr" onchange="applyFilter()" checked class="w-4 h-4 rounded border-theme-border text-brand-500 focus:ring-brand-500 bg-theme-body">
+        Ignore Internal Navs
+      </label>
+    </div>
+  </div>
+  
+  <div class="overflow-x-auto">
+    <table class="w-full text-left border-collapse whitespace-nowrap">
+      <thead>
+        <tr class="bg-theme-body border-b border-theme-border text-xs uppercase tracking-wider text-theme-text-muted font-semibold">
+          <th class="px-5 py-4">ID</th>
+          <th class="px-5 py-4">Name</th>
+          <th class="px-5 py-4">Reg ID</th>
+          <th class="px-5 py-4">HR ID</th>
+          <th class="px-5 py-4">Status</th>
+          <th class="px-5 py-4 text-center">Tab</th>
+          <th class="px-5 py-4 text-center">Esc</th>
+          <th class="px-5 py-4 text-center">FS Exit</th>
+          <th class="px-5 py-4 text-center">Away</th>
+          <th class="px-5 py-4 text-center">Focus</th>
+          <th class="px-5 py-4 text-center">Start</th>
+          <th class="px-5 py-4 text-center">Re-entry</th>
+          <th class="px-5 py-4 text-center">Direct</th>
+          <th class="px-5 py-4 text-center">Rejects</th>
+          <th class="px-5 py-4">Last Seen</th>
+        </tr>
+      </thead>
+      <tbody id="rows" class="text-sm divide-y divide-theme-border">
+        <!-- Rows dynamically injected -->
+      </tbody>
+    </table>
+  </div>
+  
+  <div id="pagination" class="px-6 py-4 border-t border-theme-border bg-theme-surface-alt flex justify-between items-center">
+    <div id="pageInfo" class="text-xs text-theme-text-muted font-medium">Showing 0 candidates</div>
+    <div class="flex gap-2">
+      <button id="prevPage" onclick="changePage(-1)" class="px-4 py-2 bg-theme-surface-hover border border-theme-border disabled:opacity-50 disabled:cursor-not-allowed text-theme-text text-xs font-medium rounded-lg transition-colors">Previous</button>
+      <button id="nextPage" onclick="changePage(1)" class="px-4 py-2 bg-theme-surface-hover border border-theme-border disabled:opacity-50 disabled:cursor-not-allowed text-theme-text text-xs font-medium rounded-lg transition-colors">Next</button>
+    </div>
+  </div>
+</section>
+
+<!-- Events Panel -->
+<section class="bg-theme-surface border border-theme-border rounded-2xl shadow-lg backdrop-blur-sm overflow-hidden flex flex-col">
+  <div class="p-5 sm:p-6 border-b border-theme-border bg-theme-surface-alt flex justify-between items-center">
+    <div>
+      <h2 class="text-lg font-bold text-theme-text flex items-center gap-2">
+        <svg class="w-5 h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        Recent Events
+      </h2>
+      <p id="eventSubtitle" class="text-xs text-theme-text-muted mt-1">Latest 100 events for selected contest</p>
+    </div>
+    <button id="clearEventFilterBtn" onclick="clearEventFilter()" class="hidden px-4 py-2 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 text-indigo-600 dark:text-indigo-300 text-xs font-medium rounded-lg transition-colors shadow-lg shadow-indigo-500/10">
+      Clear Filter
+    </button>
+  </div>
+  
+  <div class="overflow-x-auto">
+    <table class="w-full text-left border-collapse whitespace-nowrap">
+      <thead>
+        <tr class="bg-theme-body border-b border-theme-border text-xs uppercase tracking-wider text-theme-text-muted font-semibold">
+          <th class="px-5 py-4">Time</th>
+          <th class="px-5 py-4">Candidate</th>
+          <th class="px-5 py-4">Contest</th>
+          <th class="px-5 py-4">Event</th>
+          <th class="px-5 py-4">Details</th>
+        </tr>
+      </thead>
+      <tbody id="events" class="text-sm divide-y divide-theme-border">
+        <!-- Events dynamically injected -->
+      </tbody>
+    </table>
+  </div>
+</section>
+
 </main>
+
 <script src="app.js"></script>
-</body></html>
+</body>
+</html>

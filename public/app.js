@@ -7,7 +7,14 @@ let selectedCandidateId = null;
 const $=id=>document.getElementById(id);
 function api(){return $("api").value.replace(/\/$/,"")}
 function headers(){return {"x-admin-key":$("key").value.trim()}}
-function contestParam(){const v=$("contestUrl").value.trim();return v?`&contestUrl=${encodeURIComponent(v)}`:""}
+function contestParam(){
+  const v=$("contestUrl").value.trim();
+  const strict=$("strictHr") && $("strictHr").checked;
+  let q = "";
+  if(v) q += `&contestUrl=${encodeURIComponent(v)}`;
+  if(strict) q += `&strictHr=true`;
+  return q;
+}
 async function loadContests(){
  try{
   const r=await fetch(api()+"/contests",{headers:headers()});
@@ -32,9 +39,9 @@ function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&l
 function escAttr(s){return esc(s)}
 
 function showLoader() {
-  const spinHtml = `<div style="display:inline-block;width:20px;height:20px;border:3px solid rgba(255,255,255,0.1);border-top-color:#3b82f6;border-radius:50%;animation:spin 1s linear infinite;"></div>`;
-  $("rows").innerHTML = `<tr><td colspan="15" style="text-align:center; padding: 30px; color: #94a3b8;">${spinHtml} <span style="vertical-align:super;margin-left:8px;">Loading candidates...</span></td></tr>`;
-  $("events").innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 30px; color: #94a3b8;">${spinHtml} <span style="vertical-align:super;margin-left:8px;">Loading events...</span></td></tr>`;
+  const spinHtml = `<div class="inline-block w-5 h-5 border-2 border-theme-border border-t-brand-500 rounded-full animate-spin"></div>`;
+  $("rows").innerHTML = `<tr><td colspan="15" class="text-center py-8 text-theme-text-muted">${spinHtml} <span class="align-super ml-2 font-medium">Loading candidates...</span></td></tr>`;
+  $("events").innerHTML = `<tr><td colspan="5" class="text-center py-8 text-theme-text-muted">${spinHtml} <span class="align-super ml-2 font-medium">Loading events...</span></td></tr>`;
 }
 
 async function load(){
@@ -85,16 +92,28 @@ async function load(){
 function render(){
  const list=candidates;
  $("rows").innerHTML=list.map(x=>{
-  const cls=x.status==="ALERT"?"alert":x.status==="WARNING"?"warning":"normal";
-  return `<tr><td><b><a href="#" onclick="filterByCandidate('${esc(x.candidateId)}'); return false;" style="color:#2563eb;text-decoration:none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">${esc(x.candidateId)}</a></b></td>
-  <td>${esc(x.studentName)}</td><td>${esc(x.studentRegId)}</td><td>${esc(x.hackerRankId)}</td>
-  <td><span class="badge ${cls}">${x.status}</span></td>
-  <td>${x.tabSwitches}</td><td>${x.escapes}</td><td>${x.fullscreenExits}</td><td>${x.navigatedAway}</td>
-  <td>${x.focusLost}</td><td>${x.sessionStarts}</td><td><b>${x.reentries}</b></td>
-  <td><b>${x.directReentries||0}</b></td>
-  <td><b>${x.passcodeRejected||0}</b></td>
-  <td class="muted">${x.lastSeen?new Date(x.lastSeen).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }):"-"}</td></tr>`
- }).join("")||`<tr><td colspan="15">No candidates found.</td></tr>`;
+  let cls = "";
+  if(x.status==="ALERT") cls="bg-rose-500/10 text-rose-500 border border-rose-500/20";
+  else if(x.status==="WARNING") cls="bg-amber-500/10 text-amber-500 border border-amber-500/20";
+  else cls="bg-emerald-500/10 text-emerald-500 border border-emerald-500/20";
+  
+  return `<tr class="hover:bg-theme-surface-hover transition-colors group">
+  <td class="px-5 py-3 font-semibold text-theme-text group-hover:text-brand-500 transition-colors"><a href="#" onclick="filterByCandidate('${esc(x.candidateId)}'); return false;">${esc(x.candidateId)}</a></td>
+  <td class="px-5 py-3 text-theme-text-secondary">${esc(x.studentName)}</td>
+  <td class="px-5 py-3 text-theme-text-secondary font-mono text-xs">${esc(x.studentRegId)}</td>
+  <td class="px-5 py-3 text-theme-text-secondary font-mono text-xs">${esc(x.hackerRankId)}</td>
+  <td class="px-5 py-3"><span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${cls}">${x.status}</span></td>
+  <td class="px-5 py-3 text-center ${x.tabSwitches>0?'text-rose-500 font-bold':'text-theme-text-muted'}">${x.tabSwitches}</td>
+  <td class="px-5 py-3 text-center ${x.escapes>0?'text-amber-500 font-bold':'text-theme-text-muted'}">${x.escapes}</td>
+  <td class="px-5 py-3 text-center ${x.fullscreenExits>0?'text-orange-500 font-bold':'text-theme-text-muted'}">${x.fullscreenExits}</td>
+  <td class="px-5 py-3 text-center ${x.navigatedAway>0?'text-rose-500 font-bold':'text-theme-text-muted'}">${x.navigatedAway}</td>
+  <td class="px-5 py-3 text-center ${x.focusLost>0?'text-amber-500 font-bold':'text-theme-text-muted'}">${x.focusLost}</td>
+  <td class="px-5 py-3 text-center text-theme-text-secondary">${x.sessionStarts}</td>
+  <td class="px-5 py-3 text-center font-bold text-emerald-500">${x.reentries}</td>
+  <td class="px-5 py-3 text-center font-bold text-fuchsia-500">${x.directReentries||0}</td>
+  <td class="px-5 py-3 text-center font-bold ${x.passcodeRejected>0?'text-red-500':'text-theme-text-muted'}">${x.passcodeRejected||0}</td>
+  <td class="px-5 py-3 text-xs text-theme-text-muted">${x.lastSeen?new Date(x.lastSeen).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }):"-"}</td></tr>`
+ }).join("")||`<tr><td colspan="15" class="px-5 py-8 text-center text-theme-text-muted font-medium">No candidates found.</td></tr>`;
  
  updatePaginationUI();
 }
@@ -102,12 +121,22 @@ function render(){
 function updatePaginationUI() {
   if (!$("pageInfo")) return;
   const start = (currentPage - 1) * 20 + 1;
-  const end = Math.min(currentPage * 20, totalCandidates);
-  $("pageInfo").textContent = totalCandidates > 0 ? `Showing ${start}-${end} of ${totalCandidates} candidates` : "Showing 0 candidates";
-  $("prevPage").disabled = currentPage === 1;
-  $("nextPage").disabled = end >= totalCandidates;
-  $("prevPage").style.opacity = currentPage === 1 ? "0.5" : "1";
-  $("nextPage").style.opacity = end >= totalCandidates ? "0.5" : "1";
+  
+  if (totalCandidates === -1) {
+    const numItems = candidates.length;
+    $("pageInfo").textContent = numItems > 0 ? `Showing page ${currentPage}` : "Showing 0 candidates";
+    $("prevPage").disabled = currentPage === 1;
+    $("nextPage").disabled = numItems < 20;
+    $("prevPage").style.opacity = currentPage === 1 ? "0.5" : "1";
+    $("nextPage").style.opacity = numItems < 20 ? "0.5" : "1";
+  } else {
+    const end = Math.min(currentPage * 20, totalCandidates);
+    $("pageInfo").textContent = totalCandidates > 0 ? `Showing ${start}-${end} of ${totalCandidates} candidates` : "Showing 0 candidates";
+    $("prevPage").disabled = currentPage === 1;
+    $("nextPage").disabled = end >= totalCandidates;
+    $("prevPage").style.opacity = currentPage === 1 ? "0.5" : "1";
+    $("nextPage").style.opacity = end >= totalCandidates ? "0.5" : "1";
+  }
 }
 
 function changePage(delta) {
@@ -140,9 +169,13 @@ function clearEventFilter() {
 }
 
 function renderEvents(){
- $("events").innerHTML=events.map(x=>`<tr><td class="muted">${new Date(x.timestamp).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata' })}</td>
- <td><b>${esc(x.candidateId)}</b></td><td class="muted">${esc(x.contestUrl)}</td>
- <td class="event">${esc(x.eventType)}</td><td class="muted">${esc(JSON.stringify(x.details||{}))}</td></tr>`).join("");
+ $("events").innerHTML=events.map(x=>`<tr class="hover:bg-theme-surface-hover transition-colors">
+ <td class="px-5 py-3 text-xs text-theme-text-muted font-mono">${new Date(x.timestamp).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata' })}</td>
+ <td class="px-5 py-3 font-semibold text-theme-text">${esc(x.candidateId)}</td>
+ <td class="px-5 py-3 text-xs text-indigo-500 dark:text-indigo-400 font-mono" title="${esc(x.contestUrl)}">${esc(x.contestUrl)}</td>
+ <td class="px-5 py-3"><span class="px-2 py-1 bg-theme-surface-alt text-brand-500 rounded text-[10px] font-bold uppercase tracking-wider border border-theme-border">${esc(x.eventType)}</span></td>
+ <td class="px-5 py-3 text-xs text-theme-text-muted font-mono" title='${esc(JSON.stringify(x.details||{}))}'>${esc(JSON.stringify(x.details||{}))}</td>
+ </tr>`).join("")||`<tr><td colspan="5" class="px-5 py-8 text-center text-theme-text-muted font-medium">No recent events found.</td></tr>`;
 }
 
 async function login() {
