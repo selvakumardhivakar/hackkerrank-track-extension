@@ -257,13 +257,13 @@ chrome.tabs.onActivated.addListener(async ({ tabId, windowId }) => {
       await handleContestLoaded(tab, "tab_activation");
       await record("CONTEST_TAB_ACTIVE", { windowId, tabId });
     } else {
+      await record("TAB_SWITCH_AWAY", {
+        windowId,
+        tabId,
+        url: tab.url || "",
+        title: tab.title || "",
+      });
       if (s.activeTabIsContest) {
-        await record("TAB_SWITCH_AWAY", {
-          windowId,
-          tabId,
-          url: tab.url || "",
-          title: tab.title || "",
-        });
         await chrome.storage.local.set({ activeTabIsContest: false });
       }
 

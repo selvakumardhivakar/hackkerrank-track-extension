@@ -168,6 +168,10 @@ def summary(contestUrl: Optional[str]=None, strictHr: bool=False, x_admin_key:st
                 c.execute(q, args+types)
                 return c.fetchone()[0]
             
+            cheating_q = "SELECT COUNT(*) FROM events" + contest_clause + " AND event_type IN ('TAB_SWITCH_AWAY', 'NAVIGATED_AWAY') AND (details::json->>'url' ILIKE '%%chatgpt%%' OR details::json->>'url' ILIKE '%%gemini%%' OR details::json->>'url' ILIKE '%%claude%%' OR details::json->>'url' ILIKE '%%stackoverflow%%' OR details::json->>'url' ILIKE '%%geeksforgeeks%%')"
+            c.execute(cheating_q, args)
+            ai_searches = c.fetchone()[0]
+            
             return {
               "students":total,
               "events":events,
@@ -181,7 +185,8 @@ def summary(contestUrl: Optional[str]=None, strictHr: bool=False, x_admin_key:st
               "passcodeAccepted":count(["FULLSCREEN_PASSCODE_ACCEPTED"]),
               "passcodeRejected":count(["FULLSCREEN_PASSCODE_REJECTED"]),
               "navigationsAway":count(["NAVIGATED_AWAY"]),
-              "focusLost":count(["BROWSER_FOCUS_LOST"])
+              "focusLost":count(["BROWSER_FOCUS_LOST"]),
+              "aiSearches": ai_searches
             }
 
 @app.get("/api/candidates")
@@ -216,6 +221,7 @@ def candidates(contestUrl: Optional[str]=None, strictHr: bool=False, page: int=1
             SUM(CASE WHEN event_type = 'FULLSCREEN_PASSCODE_ACCEPTED' THEN 1 ELSE 0 END) as passcodeAccepted,
             SUM(CASE WHEN event_type = 'FULLSCREEN_PASSCODE_REJECTED' THEN 1 ELSE 0 END) as passcodeRejected,
             SUM(CASE WHEN event_type = 'BROWSER_FOCUS_LOST' THEN 1 ELSE 0 END) as focus,
+            SUM(CASE WHEN event_type IN ('TAB_SWITCH_AWAY', 'NAVIGATED_AWAY') AND (details::json->>'url' ILIKE '%%chatgpt%%' OR details::json->>'url' ILIKE '%%gemini%%' OR details::json->>'url' ILIKE '%%claude%%' OR details::json->>'url' ILIKE '%%stackoverflow%%' OR details::json->>'url' ILIKE '%%geeksforgeeks%%') THEN 1 ELSE 0 END) as ai_searches,
             SUM(CASE WHEN event_type IN ('TAB_SWITCH_AWAY', 'ESCAPE_KEY', 'BROWSER_FULLSCREEN_EXIT', 'NAVIGATED_AWAY', 'BROWSER_FOCUS_LOST') THEN 1 ELSE 0 END) as violations
         FROM events
         WHERE 1=1 {contest_clause}
@@ -237,7 +243,7 @@ def candidates(contestUrl: Optional[str]=None, strictHr: bool=False, page: int=1
             
             out = []
             for r in rows:
-                violations = int(r[16])
+                violations = int(r[17])
                 status="ALERT" if violations>=5 else ("WARNING" if violations>0 else "NORMAL")
                 out.append({
                   "candidateId": r[0],
@@ -256,6 +262,7 @@ def candidates(contestUrl: Optional[str]=None, strictHr: bool=False, page: int=1
                   "passcodeAccepted": int(r[13]),
                   "passcodeRejected": int(r[14]),
                   "focusLost": int(r[15]),
+                  "aiSearches": int(r[16]),
                   "violations": violations,
                   "status": status
                 })

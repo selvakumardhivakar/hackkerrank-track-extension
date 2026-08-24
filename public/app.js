@@ -116,6 +116,7 @@ async function load() {
     $("reentries").textContent = sum.reentries || 0;
     $("directReentries").textContent = sum.directReentries || 0;
     $("passcodeRejected").textContent = sum.passcodeRejected || 0;
+    if($("aiSearches")) $("aiSearches").textContent = sum.aiSearches || 0;
     $("dot").style.background = "#22c55e";
     render();
     renderEvents();
@@ -150,6 +151,7 @@ function render() {
   <td class="px-5 py-3 text-center ${x.fullscreenExits > 0 ? "text-orange-500 font-bold" : "text-theme-text-muted"}">${x.fullscreenExits}</td>
   <td class="px-5 py-3 text-center ${x.navigatedAway > 0 ? "text-rose-500 font-bold" : "text-theme-text-muted"}">${x.navigatedAway}</td>
   <td class="px-5 py-3 text-center ${x.focusLost > 0 ? "text-amber-500 font-bold" : "text-theme-text-muted"}">${x.focusLost}</td>
+  <td class="px-5 py-3 text-center ${x.aiSearches > 0 ? "text-red-600 font-bold bg-red-500/10" : "text-theme-text-muted"}">${x.aiSearches || 0}</td>
   <td class="px-5 py-3 text-center text-theme-text-secondary">${x.sessionStarts}</td>
   <td class="px-5 py-3 text-center font-bold text-emerald-500">${x.reentries}</td>
   <td class="px-5 py-3 text-center font-bold text-fuchsia-500">${x.directReentries || 0}</td>
@@ -298,6 +300,7 @@ async function exportCSV() {
       "FS Exits",
       "Nav Away",
       "Focus Lost",
+      "AI Searches",
       "Session Starts",
       "Re-entries",
       "Direct Returns",
@@ -315,6 +318,7 @@ async function exportCSV() {
       x.fullscreenExits,
       x.navigatedAway,
       x.focusLost,
+      x.aiSearches || 0,
       x.sessionStarts,
       x.reentries,
       x.directReentries || 0,
