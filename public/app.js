@@ -16,9 +16,11 @@ function headers() {
 function contestParam() {
   const v = $("contestUrl").value.trim();
   const strict = $("strictHr") && $("strictHr").checked;
+  const aiSort = $("aiFilter") && $("aiFilter").checked;
   let q = "";
   if (v) q += `&contestUrl=${encodeURIComponent(v)}`;
   if (strict) q += `&strictHr=true`;
+  if (aiSort) q += `&aiSort=true`;
   return q;
 }
 async function loadContests() {

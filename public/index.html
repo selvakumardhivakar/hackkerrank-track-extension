@@ -237,6 +237,10 @@
       </button>
       <input id="filter" oninput="onSearch()" placeholder="Search..." class="w-full sm:w-48 px-4 py-2 bg-theme-body border border-theme-border rounded-lg text-theme-text text-xs focus:outline-none focus:border-brand-500 transition-colors placeholder-theme-text-muted">
       <label class="flex items-center gap-2 text-xs font-medium text-theme-text-secondary cursor-pointer hover:text-theme-text transition-colors bg-theme-surface-alt px-3 py-2 rounded-lg border border-theme-border">
+        <input type="checkbox" id="aiFilter" onchange="applyFilter()" class="w-4 h-4 rounded border-theme-border text-brand-500 focus:ring-brand-500 bg-theme-body">
+        Sort by AI
+      </label>
+      <label class="flex items-center gap-2 text-xs font-medium text-theme-text-secondary cursor-pointer hover:text-theme-text transition-colors bg-theme-surface-alt px-3 py-2 rounded-lg border border-theme-border">
         <input type="checkbox" id="strictHr" onchange="applyFilter()" checked class="w-4 h-4 rounded border-theme-border text-brand-500 focus:ring-brand-500 bg-theme-body">
         Ignore Internal Navs
       </label>
