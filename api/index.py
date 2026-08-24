@@ -190,7 +190,7 @@ def summary(contestUrl: Optional[str]=None, strictHr: bool=False, x_admin_key:st
             }
 
 @app.get("/api/candidates")
-def candidates(contestUrl: Optional[str]=None, strictHr: bool=False, page: int=1, limit: int=20, search: str="", x_admin_key:str=Header(default="")):
+def candidates(contestUrl: Optional[str]=None, strictHr: bool=False, aiSort: bool=False, page: int=1, limit: int=20, search: str="", x_admin_key:str=Header(default="")):
     auth(x_admin_key)
     contest_clause = " AND contest_url=%s" if contestUrl else ""
     args=[contestUrl] if contestUrl else []
@@ -236,7 +236,10 @@ def candidates(contestUrl: Optional[str]=None, strictHr: bool=False, page: int=1
             count_args = args + [search_term, search_term, search_term, search_term]
             
             # Get paginated data
-            paginated_query = query + " ORDER BY violations DESC, candidate_id ASC LIMIT %s OFFSET %s"
+            if aiSort:
+                paginated_query = query + " ORDER BY ai_searches DESC, violations DESC, candidate_id ASC LIMIT %s OFFSET %s"
+            else:
+                paginated_query = query + " ORDER BY violations DESC, candidate_id ASC LIMIT %s OFFSET %s"
             data_args = count_args + [limit, offset]
             c.execute(paginated_query, data_args)
             rows = c.fetchall()
