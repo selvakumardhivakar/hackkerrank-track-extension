@@ -1,15 +1,9 @@
 {
   "manifest_version": 3,
   "name": "HackerRank Contest Tracking",
-  "version": "5.0.0",
+  "version": "6.0.0",
   "description": "Authorized contest monitoring extension.",
-  "permissions": [
-    "tabs",
-    "storage",
-    "windows",
-    "scripting",
-    "alarms"
-  ],
+  "permissions": ["tabs", "storage", "windows", "scripting", "alarms"],
   "host_permissions": [
     "https://www.hackerrank.com/*",
     "http://localhost:8000/*"
@@ -22,12 +16,8 @@
   },
   "content_scripts": [
     {
-      "matches": [
-        "https://www.hackerrank.com/*"
-      ],
-      "js": [
-        "content.js"
-      ],
+      "matches": ["https://www.hackerrank.com/*"],
+      "js": ["content.js"],
       "run_at": "document_start"
     }
   ]
