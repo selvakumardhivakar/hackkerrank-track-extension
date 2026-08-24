@@ -75,10 +75,16 @@ class SetPasscodeRequest(BaseModel):
 def _passcode_hash(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
 
-def is_tracking_enabled() -> bool:
+def is_tracking_enabled(contestUrl: Optional[str] = None):
     try:
         with get_db() as conn:
             with conn.cursor() as c:
+                if contestUrl:
+                    c.execute("SELECT value FROM app_settings WHERE key=%s", (f"tracking_enabled:{contestUrl}",))
+                    row = c.fetchone()
+                    if row:
+                        return row[0] == 'true'
+                
                 c.execute("SELECT value FROM app_settings WHERE key='tracking_enabled'")
                 row = c.fetchone()
                 if row:
@@ -92,36 +98,43 @@ def health(): return {"status":"ok","database":"postgres"}
 
 class TrackingSettingRequest(BaseModel):
     enabled: bool
+    contestUrl: Optional[str] = None
 
 @app.post("/api/settings/tracking")
 def set_tracking(req: TrackingSettingRequest, x_admin_key:str=Header(default="")):
     auth(x_admin_key)
     val = 'true' if req.enabled else 'false'
+    key = f"tracking_enabled:{req.contestUrl}" if req.contestUrl else "tracking_enabled"
     with get_db() as conn:
         with conn.cursor() as c:
             c.execute("""
                 INSERT INTO app_settings (key, value)
-                VALUES ('tracking_enabled', %s)
+                VALUES (%s, %s)
                 ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
-            """, (val,))
+            """, (key, val))
         conn.commit()
-    return {"ok": True, "tracking_enabled": req.enabled}
+    return {"ok": True, "tracking_enabled": req.enabled, "contestUrl": req.contestUrl}
 
 @app.get("/api/settings/tracking")
-def get_tracking(x_admin_key:str=Header(default="")):
+def get_tracking(contestUrl: Optional[str]=None, x_admin_key:str=Header(default="")):
     auth(x_admin_key)
-    return {"ok": True, "tracking_enabled": is_tracking_enabled()}
+    return {"ok": True, "tracking_enabled": is_tracking_enabled(contestUrl), "contestUrl": contestUrl}
 
 @app.post("/api/events")
 def create_event(payload: Union[Event, List[Event]]):
-    if not is_tracking_enabled():
-        return {"ok":True,"ignored":True,"message":"Tracking is globally disabled."}
-    
     events_list = payload if isinstance(payload, list) else [payload]
+    
+    valid_events = []
+    for e in events_list:
+        if is_tracking_enabled(e.contestUrl):
+            valid_events.append(e)
+            
+    if not valid_events:
+        return {"ok":True,"ignored":True,"message":"Tracking is disabled for these contests."}
     
     with get_db() as conn:
         with conn.cursor() as c:
-            for e in events_list:
+            for e in valid_events:
                 ts = e.timestamp or datetime.now(timezone.utc).isoformat()
                 c.execute("""INSERT INTO events
                 (candidate_id,contest_url,event_type,timestamp,details)

@@ -58,7 +58,7 @@ async function record(eventType, details = {}) {
     .then(async () => {
       const local = await chrome.storage.local.get({ events: [] });
       await chrome.storage.local.set({
-        events: [...local.events, event].slice(-10000),
+        events: [...local.events, event].slice(-1000),
       });
 
       if (typeof API_ENDPOINT !== "undefined" && API_ENDPOINT) {
@@ -106,18 +106,22 @@ async function flushEvents() {
       body: JSON.stringify(uniqueBatch),
       keepalive: true,
     });
-    
+
     if (res.ok) {
       await new Promise((resolve) => {
-        recordPromise = recordPromise.then(async () => {
-          try {
-            const latest = await chrome.storage.local.get({ unsyncedEvents: [] });
-            const remaining = latest.unsyncedEvents.slice(batch.length);
-            await chrome.storage.local.set({ unsyncedEvents: remaining });
-          } finally {
-            resolve();
-          }
-        }).catch(resolve);
+        recordPromise = recordPromise
+          .then(async () => {
+            try {
+              const latest = await chrome.storage.local.get({
+                unsyncedEvents: [],
+              });
+              const remaining = latest.unsyncedEvents.slice(batch.length);
+              await chrome.storage.local.set({ unsyncedEvents: remaining });
+            } finally {
+              resolve();
+            }
+          })
+          .catch(resolve);
       });
     }
   } catch (_) {
