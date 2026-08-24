@@ -33,7 +33,7 @@ function validateInputs() {
 
 (async () => {
   const c = await chrome.storage.local.get({
-    contestUrl: "https://www.hackerrank.com/Karunya_12",
+    contestUrl: "",
     studentName: "",
     studentRegId: "",
     hackerRankId: "",

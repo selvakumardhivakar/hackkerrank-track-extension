@@ -1,7 +1,7 @@
 importScripts("env.js");
 
 const DEFAULTS = {
-  contestUrl: "https://www.hackerrank.com/<contest-id>",
+  contestUrl: "",
   candidateId: "",
   studentName: "",
   studentRegId: "",

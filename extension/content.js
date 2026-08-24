@@ -291,6 +291,38 @@
     post("PAGE_UNLOAD_ATTEMPT", { pageUrl: location.href });
   });
 
+  // Block copy/cut/paste and inject junk data into the clipboard
+  ["copy", "cut", "paste"].forEach((evt) => {
+    document.addEventListener(
+      evt,
+      (e) => {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        post("CLIPBOARD_ACTION_BLOCKED", { action: evt });
+        showCenterWarning(
+          "Clipboard Blocked",
+          `The ${evt} action is disabled during this contest.`,
+          "red",
+        );
+        // try {
+        //   navigator.clipboard.writeText("[Contest Security] Action not allowed.").catch(() => {});
+        // } catch (_) {}
+      },
+      true,
+    );
+  });
+
+  // Constantly overwrite the clipboard with junk data if the tab is focused
+  // setInterval(() => {
+  //   if (document.hasFocus()) {
+  //     try {
+  //       navigator.clipboard
+  //         .writeText("[Contest Security] Action not allowed.")
+  //         .catch(() => {});
+  //     } catch (_) {}
+  //   }
+  // }, 1000);
+
   if (document.fullscreenElement) {
     showFullscreenBanner();
     try {
