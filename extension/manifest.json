@@ -1,9 +1,17 @@
 {
   "manifest_version": 3,
-  "name": "HackerRank Contest Tracking",
-  "version": "6.0.1",
+  "name": "New Hackkerrank Contest Tracker",
+  "version": "6.0.2",
   "description": "Authorized contest monitoring extension.",
-  "permissions": ["tabs", "storage", "windows", "scripting", "alarms"],
+  "permissions": [
+    "tabs",
+    "storage",
+    "windows",
+    "scripting",
+    "alarms",
+    "clipboardWrite",
+    "clipboardRead"
+  ],
   "host_permissions": [
     "https://www.hackerrank.com/*",
     "http://localhost:8000/*"
@@ -12,7 +20,17 @@
     "service_worker": "background.js"
   },
   "action": {
-    "default_popup": "popup.html"
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icon16.png",
+      "48": "icon48.png",
+      "128": "icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
   },
   "content_scripts": [
     {
